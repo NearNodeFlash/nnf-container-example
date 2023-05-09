@@ -1,0 +1,9 @@
+spec:
+  allocationSets:
+    - allocationSize: 50000000000
+      label: gfs2
+      storage:
+        - name: kind-worker2
+          allocationCount: 3
+        - name: kind-worker3
+          allocationCount: 1
