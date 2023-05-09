@@ -7,12 +7,17 @@
 // An intro MPI hello world program that uses MPI_Init, MPI_Comm_size,
 // MPI_Comm_rank, MPI_Finalize, and MPI_Get_processor_name.
 //
-#include <mpi.h>
-#include <stdio.h>
+#include <errno.h>
 #include <limits.h>
+#include <stdio.h>
 #include <string.h>
 
-int main(int argc, char** argv) {
+#include <fcntl.h>
+
+#include <mpi.h>
+
+int main(int argc, char **argv)
+{
   char nnf_storage_path[PATH_MAX];
 
   // Initialize the MPI environment. The two arguments to MPI Init are not
@@ -33,16 +38,38 @@ int main(int argc, char** argv) {
   int name_len;
   MPI_Get_processor_name(processor_name, &name_len);
 
-  if (argc < 2) {
+  if (argc < 2)
+  {
     printf("Storage parameter not supplied\n");
     return -1;
   }
-  strncpy(nnf_storage_path, argv[1], PATH_MAX); 
+  strncpy(nnf_storage_path, argv[1], PATH_MAX);
 
   // Print off a hello world message
-  printf("Hello world from processor %s, rank %d out of %d processors. Storage path: %s\n",
+  printf("Hello world from processor %s, rank %d out of %d processors. NNF Storage path: %s\n",
          processor_name, world_rank, world_size, nnf_storage_path);
-  // TODO pull in the storage env variables
+
+  if (sprintf(nnf_storage_path, "%s/testfile-%d", nnf_storage_path, world_rank) == -1)
+  {
+    fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
+    return errno;
+  }
+
+  int fd = open(nnf_storage_path, O_WRONLY | O_CREAT);
+  if (fd == -1)
+  {
+    fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
+    return errno;
+  }
+
+  int res = posix_fallocate(fd, 0, 100);
+  if (res == -1)
+  {
+    fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
+    return errno;
+  }
+
+  printf("rank %d: wrote file to '%s'\n", world_rank, nnf_storage_path);
 
   // Finalize the MPI environment. No more MPI calls can be made after this
   MPI_Finalize();
