@@ -19,6 +19,6 @@ FROM ghcr.io/nearnodeflash/nnf-mfu:latest
 # Copy application from build stage into final stage
 COPY --from=build /src/mpi_hello_world /usr/bin/mpi_hello_world
 
-# TODO is this what we want?
-# MPI Containers communicate via ssh, so we need to ensure that sshd is running on each container.
-RUN service ssh start
+# # TODO is this what we want?
+# # MPI Containers communicate via ssh, so we need to ensure that sshd is running on each container.
+# RUN service ssh start
