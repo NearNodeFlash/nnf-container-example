@@ -1,5 +1,4 @@
 data:
-  # Change these
   - name: "compute-node-1"
   - name: "compute-node-2"
   - name: "compute-node-3"
