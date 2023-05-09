@@ -54,13 +54,6 @@ FROM ghcr.io/nearnodeflash/nnf-mfu:latest
 Using this image ensures that your image contains the necessary software to run MPI applications
 across Kubernetes pods that are running on NNF nodes.
 
-Your container image is used as the image for both MPI launchers and workers. `mpirun` uses ssh to
-communicate with worker nodes, so an ssh server must be enabled:
-
-```dockerfile
-RUN service ssh start
-```
-
 #### Non-MPI Applications
 
 There are no requirements for non-MPI applications. There is no launcher/worker model, so each
@@ -195,7 +188,7 @@ nodes.
 
 For the `jobdw` directive that is included, we must define the servers (i.e. NNF nodes) and the computes.
 
-Update the `servers` and `computes` resources assigned to the workflow. 
+Update the `servers` and `computes` resources assigned to the workflow.
 
 **Note**: you must change
 the node names in the `allocation-*.yaml` files to match your system. `allocationCount` must match
