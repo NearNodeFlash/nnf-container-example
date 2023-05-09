@@ -3,7 +3,7 @@
 ## Overview
 
 This repo contains an example MPI application that is built into a container that can be used for an
-NNF Container Workflow. The application uses the dynamic storage created by the NNF Workflow. The
+NNF Container Workflow. The application uses the dynamic storage created by the workflow. The
 storage path is passed into the hello world application.
 
 The overall process for creating a container workflow is as follows:
@@ -16,6 +16,7 @@ The overall process for creating a container workflow is as follows:
 * A Workflow is created and contains two directives:
   * Directive for the GFS2 filesystem (that matches the GFS2 storage name in the profile)
   * Directive for the container (that specifies the profile)
+* Workflow is progressed to the PreRun stage, where the container(s) starts
 
 ## Making a Container Image
 
@@ -23,18 +24,22 @@ To start, you must have a working container image that includes your application
 your application are used in the NNF Container Profile to instruct the container workflow to run
 your application.
 
-Ensure your image meets the following requirements coupled with your user application.
+The `Dockerfile` in this repository creates an example image that can be used to drive container
+workflows.
+
+When building your own image, ensure it meets the following requirements coupled with your user
+application.
 
 ### Requirements
 
 Any container image that is built must be available in an image registry that is available on your
 cluster. See your cluster administrator for more details.
 
-In this example, we're using the GitHut Container Registry (ghcr.io).
+In this example, we're using the GitHut Container Registry (ghcr.io), so your cluster must have internet access to retrieve the image.
 
 #### MPI Applications
 
-For MPI applications, the container must contain the following:
+For MPI applications, the container must include the following:
 
 * open-mpi
 * MPI File Utils
@@ -46,11 +51,11 @@ The easiest way to do this is to use the NNF MFU (MPI File Utils) image in your 
 FROM ghcr.io/nearnodeflash/nnf-mfu:latest
 ```
 
-Using this image ensures that your image containers the necessary software to run MPI applications
+Using this image ensures that your image contains the necessary software to run MPI applications
 across Kubernetes pods that are running on NNF nodes.
 
-Your container image is meant to be used as both MPI launchers and workers (but that doesn't have to
-be the case). `mpirun` uses ssh to communicate with worker nodes, so an ssh server must be enabled:
+Your container image is used as the image for both MPI launchers and workers. `mpirun` uses ssh to
+communicate with worker nodes, so an ssh server must be enabled:
 
 ```dockerfile
 RUN service ssh start
@@ -69,9 +74,8 @@ run your application.
 
 ### Storages
 
-In this example, we are expecting to have 1 non-optional storage called `DW_JOB_my_storage`. This
-filesystem can be of any type. If the storage is persistent storage, then it must start with
-`DW_PERSISTENT` rather than `DW_JOB`.
+In this example, we are expecting to have 1 non-optional storage called `DW_JOB_my_storage`. If the
+storage is persistent storage, then it must start with `DW_PERSISTENT` rather than `DW_JOB`. Filesystem types are not defined here, but later in the DW directive.
 
 ```yaml
 ---
@@ -141,16 +145,19 @@ For the full definition of the `MPIJobSpec` provided by `mpi-operator`, see the 
 some of these values are overridden by NNF software and not all configurable options have been
 tested.
 
-## Creating a DWS Container Workflow
+For a full understanding of the other optinos in an NNF Container Profile, see the nnf-sos
+[samples](https://github.com/NearNodeFlash/nnf-sos/blob/master/config/samples/nnf_v1alpha1_nnfcontainerprofile.yaml)
+and
+[examples](https://github.com/NearNodeFlash/nnf-sos/blob/master/config/examples/nnf_v1alpha1_nnfcontainerprofiles.yaml).
 
-With a container image and an NNF Container Profile, we are now ready to create a DWS Workflow.
+## Creating a DW Container Workflow
 
-The workflow definition will include two DWS Directives:
+With a container image and an NNF Container Profile, we are now ready to create a Workflow.
+
+The workflow definition will include two DW Directives:
 
 1. `#DW jobdw` to create the storage defined in the profile
 2. `#DW container` to create the containers and map the storage/profile.
-
-Note: this is not a full tutorial on DWS directives.
 
 First, we'll create the storage. We will be using GFS2 for the filesystem:
 
@@ -158,7 +165,7 @@ First, we'll create the storage. We will be using GFS2 for the filesystem:
 #DW jobdw name=nnf-container-example-gfs2 type=gfs2 capacity=50GB
 ```
 
-Then, define the container. Note the `DW_JOB_my_storage=nnf-container-example-gfs2` argument matches what is in the NNF Container Profile and maps it to the name of the GFS2 filesystem created above.
+Then, define the container. Note the `DW_JOB_my_storage=nnf-container-example-gfs2` argument matches what is in the NNF Container Profile and maps it to the name of the GFS2 filesystem created in the DW Directive above.
 
 ```none
 #DW container name=nnf-container-example profile=nnf-container-example-profile DW_JOB_my_storage=nnf-container-example-gfs2
@@ -170,7 +177,7 @@ Then, define the container. Note the `DW_JOB_my_storage=nnf-container-example-gf
 the manual way of doing things. You may want to consult a Flux expert on how to drive a container
 workflow using Flux.
 
-With a working Kubernetes cluster, the previous examples can be put together and deployed on the system.
+With a working Kubernetes cluster, the previous examples can be put together and deployed on the system. The files in this repository have done that.
 
 ### Create the Profile and Workflow
 
@@ -188,8 +195,12 @@ nodes.
 
 For the `jobdw` directive that is included, we must define the servers (i.e. NNF nodes) and the computes.
 
-Update the `servers` and `computes` resources assigned to the workflow. **Note**: you must change
-the node names in the `allocation-*.yaml` files to match your system.
+Update the `servers` and `computes` resources assigned to the workflow. 
+
+**Note**: you must change
+the node names in the `allocation-*.yaml` files to match your system. `allocationCount` must match
+the number of compute nodes being targeted for that particular NNF node. In the example,
+`rabbit-node-1` is attached to `compute-node-1` and `compute-node-2`, etc.
 
 ```shell
 kubectl patch --type merge --patch-file=allocation-servers.yaml servers nnf-container-example-0
@@ -198,7 +209,7 @@ kubectl patch --type merge --patch-file=allocation-computes.yaml computes nnf-co
 
 ### Progress Workflow
 
-At the point, the workflow should be in `Proposal` state and ready:
+At this point, the workflow should be in `Proposal` state and ready:
 
 ```shell
 $ kubectl get workflows
@@ -224,7 +235,7 @@ Progress to `DataIn`:
 kubectl patch --type merge workflow nnf-container-example --patch '{"spec": {"desiredState": "DataIn"}}'
 ```
 
-Then `PreRun`.
+Then `PreRun`:
 
 ```shell
 kubectl patch --type merge workflow nnf-container-example --patch '{"spec": {"desiredState": "PreRun"}}'
