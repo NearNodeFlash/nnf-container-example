@@ -49,7 +49,10 @@ int main(int argc, char **argv)
   printf("Hello world from processor %s, rank %d out of %d processors. NNF Storage path: %s\n",
          processor_name, world_rank, world_size, nnf_storage_path);
 
-  if (sprintf(nnf_storage_path, "%s/testfile-%d", nnf_storage_path, world_rank) == -1)
+  // We're using a GFS2 filesystem, which has index mounts for every compute node
+  // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/0/
+  // So use the rank to index into the NNF storage path
+  if (sprintf(nnf_storage_path, "%s/%d/testfile", nnf_storage_path, world_rank) == -1)
   {
     fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
     return errno;

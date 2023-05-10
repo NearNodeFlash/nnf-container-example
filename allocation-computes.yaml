@@ -1,5 +1,5 @@
 data:
-  - name: "compute-node-1"
-  - name: "compute-node-2"
-  - name: "compute-node-3"
-  - name: "compute-node-4"
+ - name: "compute-01"
+ - name: "compute-02"
+ - name: "compute-03"
+ - name: "compute-04"
