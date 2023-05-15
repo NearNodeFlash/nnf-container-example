@@ -8,6 +8,8 @@ data:
   storages:
     - name: DW_JOB_my_storage
       optional: false
+    - name: DW_PERSISTENT_my_lustre
+      optional: true
   mpiSpec:
     mpiReplicaSpecs:
       Launcher:
@@ -20,6 +22,7 @@ data:
                   - mpirun
                   - mpi_hello_world
                   - "$(DW_JOB_my_storage)"
+                  - "$(DW_PERSISTENT_my_lustre)"
       Worker:
         template:
           spec:
@@ -36,9 +39,11 @@ metadata:
 spec:
   desiredState: "Proposal"
   dwDirectives:
+    - "#DW persistentdw name=blake-persistent"
     - "#DW jobdw name=nnf-container-example-gfs2 type=gfs2 capacity=50GB"
     - "#DW container name=nnf-container-example profile=nnf-container-example-profile \
-      DW_JOB_my_storage=nnf-container-example-gfs2"
+      DW_JOB_my_storage=nnf-container-example-gfs2 \
+      DW_PERSISTENT_my_lustre=blake-persistent"
   wlmID: "5f239bd8-30db-450b-8c2c-a1a7c8631a1a"
   jobID: 900001
   userID: 1050
