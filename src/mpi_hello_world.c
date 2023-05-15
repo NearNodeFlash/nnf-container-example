@@ -8,11 +8,11 @@
 // MPI_Comm_rank, MPI_Finalize, and MPI_Get_processor_name.
 //
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
-
-#include <fcntl.h>
+#include <unistd.h>
 
 #include <mpi.h>
 
@@ -46,29 +46,33 @@ int main(int argc, char **argv)
   strncpy(nnf_storage_path, argv[1], PATH_MAX);
 
   // Print off a hello world message
-  printf("Hello world from processor %s, rank %d out of %d processors. NNF Storage path: %s\n",
-         processor_name, world_rank, world_size, nnf_storage_path);
+  char hostname[1024];
+  hostname[1023] = '\0';
+  gethostname(hostname, 1023);
+  printf("Hello world from processor %s, rank %d out of %d processors. NNF Storage path: %s, hostname: %s\n",
+         processor_name, world_rank, world_size, nnf_storage_path, hostname);
 
   // We're using a GFS2 filesystem, which has index mounts for every compute node
   // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/0/
-  // So use the rank to index into the NNF storage path
-  if (sprintf(nnf_storage_path, "%s/%d/testfile", nnf_storage_path, world_rank) == -1)
+  if (sprintf(nnf_storage_path, "%s/0/testfile", nnf_storage_path) == -1)
   {
     fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
     return errno;
   }
 
+  printf("rank %d: test file: %s\n", world_rank, nnf_storage_path);
+
   int fd = open(nnf_storage_path, O_WRONLY | O_CREAT);
   if (fd == -1)
   {
-    fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
+    fprintf(stderr, "rank %d: error opening file: %s\n", world_rank, strerror(errno));
     return errno;
   }
 
   int res = posix_fallocate(fd, 0, 100);
   if (res == -1)
   {
-    fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
+    fprintf(stderr, "rank %d: error allocating file: %s\n", world_rank, strerror(errno));
     return errno;
   }
 
