@@ -295,3 +295,13 @@ Once completed, the workflow and profile can be deleted:
 ```shell
 kubectl delete -f nnf-container-example.yaml
 ```
+
+## Additional Info
+
+### Communicating with Compute Node Applications
+
+Compute node applications will have the ability to communicate with container applications using
+ports. The container application can listen in on a port that is assigned to the NNF container. The
+port number is made available to the compute node application via environment variables.
+
+Port assignment is not yet implemented to the containers running on the NNF nodes.
