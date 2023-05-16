@@ -251,17 +251,21 @@ You can use kubectl to inspect the log to get your application's output:
 
 ```shell
 $ kubectl logs demo-container-launcher-wcvcs
-Defaulted container "nnf-container-example" out of: nnf-container-example, mpi-wait-for-worker-0 (init), mpi-init-passwd (init)
+Defaulted container "nnf-container-example" out of: nnf-container-example, mpi-wait-for-worker-0 (init), mpi-wait-for-worker-1 (init), mpi-init-passwd (init)
 Warning: Permanently added 'demo-container-worker-1.demo-container-worker.default.svc,10.244.1.6' (ECDSA) to the list of known hosts.
 Warning: Permanently added 'demo-container-worker-0.demo-container-worker.default.svc,10.244.3.5' (ECDSA) to the list of known hosts.
-Hello world from processor demo-container-worker-1, rank 1 out of 2 processors. Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0
-Hello world from processor demo-container-worker-0, rank 0 out of 2 processors. Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0
+Hello world from processor demo-container-worker-1, rank 1 out of 2 processors. NNF Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0, hostname: demo-container-worker-1
+rank 1: test file: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0/0/testfile
+rank 1: wrote file to '/mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0/0/testfile'
+Hello world from processor demo-container-worker-0, rank 0 out of 2 processors. NNF Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0, hostname: demo-container-worker-0
+rank 0: test file: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0/0/testfile
+rank 0: wrote file to '/mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0/0/testfile'
 ```
 
 You can see that the Storage path is passed into the container application and printed to the log:
 
 ```none
-Hello world from processor demo-container-worker-1, rank 1 out of 2 processors. Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0
+Hello world from processor demo-container-worker-1, rank 1 out of 2 processors. NNF Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0, hostname: demo-container-worker-1
 ```
 
 The next state is `PostRun`. When containers have exited cleanly, the status state will become `Completed`.
