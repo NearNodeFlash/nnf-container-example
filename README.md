@@ -180,9 +180,9 @@ kubectl apply -f nnf-container-example.yaml
 ### Assign Nodes to the Workflow
 
 For container directives, **compute nodes** must be assigned to the workflow. The NNF software will trace
-the computes node back to their local NNF nodes and the container will be executed on those NNF
-nodes. The act of assigning compute nodes to your container workflow instructs the NNF software on
-which NNF nodes to run the containers on.
+the compute nodes back to their local NNF nodes and the container will be executed on those NNF
+nodes. The act of assigning compute nodes to your container workflow instructs the NNF software to
+select the NNF nodes that run the containers.
 
 For the `jobdw` directive that is included, we must define the servers (i.e. NNF nodes) and the computes.
 
