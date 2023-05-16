@@ -44,11 +44,12 @@ For MPI applications, the container must include the following:
 * open-mpi
 * MPI File Utils
 * ssh server
+* nslookup
 
 The easiest way to do this is to use the NNF MFU (MPI File Utils) image in your Dockerfile:
 
 ```dockerfile
-FROM ghcr.io/nearnodeflash/nnf-mfu:latest
+FROM ghcr.io/nearnodeflash/nnf-mfu:0.0.1
 ```
 
 Using this image ensures that your image contains the necessary software to run MPI applications
