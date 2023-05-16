@@ -283,3 +283,15 @@ demo-container-launcher-wcvcs   0/1     Completed   0          73s
 demo-container-worker-0         1/1     Running     0          73s
 demo-container-worker-1         1/1     Running     0          73s
 ```
+
+You can then teardown the workflow:
+
+```shell
+kubectl patch --type merge workflow demo-container --patch '{"spec": {"desiredState": "Teardown"}}'
+```
+
+Once completed, the workflow and profile can be deleted:
+
+```shell
+kubectl delete -f nnf-container-example.yaml
+```
