@@ -50,7 +50,7 @@ For MPI applications, the container must include the following:
 The easiest way to do this is to use the NNF MFU (MPI File Utils) image in your Dockerfile:
 
 ```dockerfile
-FROM ghcr.io/nearnodeflash/nnf-mfu:0.0.1
+FROM ghcr.io/nearnodeflash/nnf-mfu:master
 ```
 
 Using this image ensures that your image contains the necessary software to run MPI applications
@@ -104,7 +104,7 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: nnf-container-example:0.0.1
+                image: nnf-container-example:master
                 command:
                   - mpirun
                   - mpi_hello_world
@@ -114,7 +114,7 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: nnf-container-example:0.0.1
+                image: nnf-container-example:master
 ```
 
 Both the `Launcher` and `Worker` must be defined. The main pieces here are to set the images for both
@@ -284,13 +284,14 @@ demo-container-worker-0         1/1     Running     0          73s
 demo-container-worker-1         1/1     Running     0          73s
 ```
 
-You can then teardown the workflow:
+You can then tear down the workflow:
 
 ```shell
 kubectl patch --type merge workflow demo-container --patch '{"spec": {"desiredState": "Teardown"}}'
 ```
 
-Once completed, the workflow and profile can be deleted:
+Once completed, the workflow and profile can be deleted. Again, you may need admin privileges to
+remove the NNF Container Profile.
 
 ```shell
 kubectl delete -f nnf-container-example.yaml
