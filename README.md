@@ -16,13 +16,14 @@ The overall process for creating a container workflow is as follows:
 * A Workflow is created and contains two directives:
   * Directive for the GFS2 filesystem (that matches the GFS2 storage name in the profile)
   * Directive for the container (that specifies the profile)
-* Workflow is progressed to the PreRun stage, where the container(s) starts
+* Workflow is progressed to the PreRun stage, where the container starts
 
 ## Making a Container Image
 
 To start, you must have a working container image that includes your application. This image and
 your application are used in the NNF Container Profile to instruct the container workflow to run
-your application.
+your application. Adding an NNF Container Profile and container image may require elevated
+privileges. Please work with your system administrator to get these on your system.
 
 The `Dockerfile` in this repository creates an example image that can be used to drive container
 workflows.
@@ -55,11 +56,6 @@ FROM ghcr.io/nearnodeflash/nnf-mfu:0.0.1
 Using this image ensures that your image contains the necessary software to run MPI applications
 across Kubernetes pods that are running on NNF nodes.
 
-#### Non-MPI Applications
-
-There are no requirements for non-MPI applications. There is no launcher/worker model, so each
-container is executed with the same command and without `mpirun` or any ssh communication.
-
 ## Writing an NNF Container Profile
 
 Once you have a working container image, it's time to create an NNF Container Profile. The profile
@@ -76,7 +72,7 @@ storage is persistent storage, then it must start with `DW_PERSISTENT` rather th
 apiVersion: nnf.cray.hpe.com/v1alpha1
 kind: NnfContainerProfile
 metadata:
-  name: nnf-container-example-profile
+  name: demo
   namespace: nnf-system
 data:
   storages:
@@ -95,7 +91,7 @@ Next, we define the container specification. For MPI applications, this is done 
 apiVersion: nnf.cray.hpe.com/v1alpha1
 kind: NnfContainerProfile
 metadata:
-  name: nnf-container-example-profile
+  name: demo
   namespace: nnf-system
 data:
   storages:
@@ -139,7 +135,7 @@ For the full definition of the `MPIJobSpec` provided by `mpi-operator`, see the 
 some of these values are overridden by NNF software and not all configurable options have been
 tested.
 
-For a full understanding of the other optinos in an NNF Container Profile, see the nnf-sos
+For a full understanding of the other options in an NNF Container Profile, see the nnf-sos
 [samples](https://github.com/NearNodeFlash/nnf-sos/blob/master/config/samples/nnf_v1alpha1_nnfcontainerprofile.yaml)
 and
 [examples](https://github.com/NearNodeFlash/nnf-sos/blob/master/config/examples/nnf_v1alpha1_nnfcontainerprofiles.yaml).
@@ -156,13 +152,13 @@ The workflow definition will include two DW Directives:
 First, we'll create the storage. We will be using GFS2 for the filesystem:
 
 ```none
-#DW jobdw name=nnf-container-example-gfs2 type=gfs2 capacity=50GB
+#DW jobdw name=demo-gfs2 type=gfs2 capacity=50GB
 ```
 
-Then, define the container. Note the `DW_JOB_my_storage=nnf-container-example-gfs2` argument matches what is in the NNF Container Profile and maps it to the name of the GFS2 filesystem created in the DW Directive above.
+Then, define the container. Note the `DW_JOB_my_storage=demo-gfs2` argument matches what is in the NNF Container Profile and maps it to the name of the GFS2 filesystem created in the DW Directive above.
 
 ```none
-#DW container name=nnf-container-example profile=nnf-container-example-profile DW_JOB_my_storage=nnf-container-example-gfs2
+#DW container name=demo-container profile=demo DW_JOB_my_storage=demo-gfs2
 ```
 
 ## Deploy Example to Cluster
@@ -183,9 +179,10 @@ kubectl apply -f nnf-container-example.yaml
 
 ### Assign Nodes to the Workflow
 
-For container directives, compute nodes must be assigned to the workflow. The NNF software will trace
+For container directives, **compute nodes** must be assigned to the workflow. The NNF software will trace
 the computes node back to their local NNF nodes and the container will be executed on those NNF
-nodes.
+nodes. The act of assigning compute nodes to your container workflow instructs the NNF software on
+which NNF nodes to run the containers on.
 
 For the `jobdw` directive that is included, we must define the servers (i.e. NNF nodes) and the computes.
 
@@ -197,89 +194,92 @@ the number of compute nodes being targeted for that particular NNF node. In the 
 `rabbit-node-1` is attached to `compute-node-1` and `compute-node-2`, etc.
 
 ```shell
-kubectl patch --type merge --patch-file=allocation-servers.yaml servers nnf-container-example-0
-kubectl patch --type merge --patch-file=allocation-computes.yaml computes nnf-container-example
+kubectl patch --type merge --patch-file=allocation-servers.yaml servers demo-container-0
+kubectl patch --type merge --patch-file=allocation-computes.yaml computes demo-container
 ```
 
 ### Progress Workflow
 
-At this point, the workflow should be in `Proposal` state and ready:
+At this point, the workflow should be in `Proposal` state and `Completed` status:
 
 ```shell
 $ kubectl get workflows
 NAME                    STATE      READY   STATUS      AGE
-nnf-container-example   Proposal   true    Completed   12m
+demo-container   Proposal   true    Completed   12m
 ```
 
-Progress the workflow to the `Setup` state and wait for ready:
+Progress the workflow to the `Setup` state and wait for `Completed`:
 
 ```shell
-kubectl patch --type merge workflow nnf-container-example --patch '{"spec": {"desiredState": "Setup"}}'
+kubectl patch --type merge workflow demo-container --patch '{"spec": {"desiredState": "Setup"}}'
 ```
 
 ```shell
 kubectl get workflows
 NAME                    STATE   READY   STATUS      AGE
-nnf-container-example   Setup   true    Completed   12m
+demo-container   Setup   true    Completed   12m
 ```
 
 Progress to `DataIn`:
 
 ```shell
-kubectl patch --type merge workflow nnf-container-example --patch '{"spec": {"desiredState": "DataIn"}}'
+kubectl patch --type merge workflow demo-container --patch '{"spec": {"desiredState": "DataIn"}}'
 ```
 
 Then `PreRun`:
 
 ```shell
-kubectl patch --type merge workflow nnf-container-example --patch '{"spec": {"desiredState": "PreRun"}}'
+kubectl patch --type merge workflow demo-container --patch '{"spec": {"desiredState": "PreRun"}}'
 ```
 
-The `PreRun` state will start the containers. Once the containers have started
-successfully, the state will be `Ready`. Your application is now running.
+The `PreRun` state will start the containers. Once the containers have started successfully, the
+status will become `Completed`. Your application is now running via the launcher pod, which is instructing
+`mpirun` to run your application on the worker pods. When the compute nodes were assigned to the
+workflow in the `Proposal` state (via the `computes` resource), the NNF software traced the compute
+nodes to their local NNF nodes. In this case, it means two NNF nodes were selected, and a worker pod
+is running on each of them.
 
 ```shell
 $ kubectl get pods
 NAME                                   READY   STATUS    RESTARTS   AGE
-nnf-container-example-launcher-wcvcs   1/1     Running   0          5s
-nnf-container-example-worker-0         1/1     Running   0          5s
-nnf-container-example-worker-1         1/1     Running   0          5s
+demo-container-launcher-wcvcs   1/1     Running   0          5s
+demo-container-worker-0         1/1     Running   0          5s
+demo-container-worker-1         1/1     Running   0          5s
 ```
 
 You can use kubectl to inspect the log to get your application's output:
 
 ```shell
-$ kubectl logs nnf-container-example-launcher-wcvcs
-Defaulted container "nnf-container-example" out of: nnf-container-example, mpi-init-passwd (init)
-Warning: Permanently added 'nnf-container-example-worker-1.nnf-container-example-worker.default.svc,10.244.1.6' (ECDSA) to the list of known hosts.
-Warning: Permanently added 'nnf-container-example-worker-0.nnf-container-example-worker.default.svc,10.244.3.5' (ECDSA) to the list of known hosts.
-Hello world from processor nnf-container-example-worker-1, rank 1 out of 2 processors. Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0
-Hello world from processor nnf-container-example-worker-0, rank 0 out of 2 processors. Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0
+$ kubectl logs demo-container-launcher-wcvcs
+Defaulted container "nnf-container-example" out of: nnf-container-example, mpi-wait-for-worker-0 (init), mpi-init-passwd (init)
+Warning: Permanently added 'demo-container-worker-1.demo-container-worker.default.svc,10.244.1.6' (ECDSA) to the list of known hosts.
+Warning: Permanently added 'demo-container-worker-0.demo-container-worker.default.svc,10.244.3.5' (ECDSA) to the list of known hosts.
+Hello world from processor demo-container-worker-1, rank 1 out of 2 processors. Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0
+Hello world from processor demo-container-worker-0, rank 0 out of 2 processors. Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0
 ```
 
 You can see that the Storage path is passed into the container application and printed to the log:
 
 ```none
-Hello world from processor nnf-container-example-worker-1, rank 1 out of 2 processors. Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0
+Hello world from processor demo-container-worker-1, rank 1 out of 2 processors. Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0
 ```
 
-The next state is `PostRun`. When containers have exited cleanly, the state will become `Ready`.
-Otherwise, it will remain `Ready:false`.
+The next state is `PostRun`. When containers have exited cleanly, the status state will become `Completed`.
 
 ```shell
-kubectl patch --type merge workflow nnf-container-example --patch '{"spec": {"desiredState": "PostRun"}}'
+kubectl patch --type merge workflow demo-container --patch '{"spec": {"desiredState": "PostRun"}}'
 ```
 
 ```shell
 $ kubectl get workflows
 NAME                    STATE     READY   STATUS      AGE
-nnf-container-example   PostRun   true    Completed   13m
+demo-container   PostRun   true    Completed   13m
 ```
 
 ```shell
 kubectl get pods
 NAME                                   READY   STATUS      RESTARTS   AGE
-nnf-container-example-launcher-wcvcs   0/1     Completed   0          73s
-nnf-container-example-worker-0         1/1     Running     0          73s
-nnf-container-example-worker-1         1/1     Running     0          73s
+demo-container-launcher-wcvcs   0/1     Completed   0          73s
+demo-container-worker-0         1/1     Running     0          73s
+demo-container-worker-1         1/1     Running     0          73s
 ```

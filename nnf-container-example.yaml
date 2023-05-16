@@ -2,7 +2,7 @@
 apiVersion: nnf.cray.hpe.com/v1alpha1
 kind: NnfContainerProfile
 metadata:
-  name: nnf-container-example-profile
+  name: demo
   namespace: nnf-system
 data:
   storages:
@@ -31,14 +31,14 @@ data:
 apiVersion: dws.cray.hpe.com/v1alpha1
 kind: Workflow
 metadata:
-  name: nnf-container-example
+  name: demo-container
   namespace: default
 spec:
   desiredState: "Proposal"
   dwDirectives:
-    - "#DW jobdw name=nnf-container-example-gfs2 type=gfs2 capacity=50GB"
-    - "#DW container name=nnf-container-example profile=nnf-container-example-profile \
-      DW_JOB_my_storage=nnf-container-example-gfs2"
+    - "#DW jobdw name=demo-gfs2 type=gfs2 capacity=50GB"
+    - "#DW container name=demo-container profile=demo \
+      DW_JOB_my_storage=demo-gfs2"
   wlmID: "5f239bd8-30db-450b-8c2c-a1a7c8631a1a"
   jobID: 900001
   userID: 1050
