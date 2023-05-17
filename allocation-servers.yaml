@@ -1,0 +1,9 @@
+spec:
+  allocationSets:
+    - allocationSize: 50000000000
+      label: gfs2
+      storage:
+        - name: rabbit-node-1
+          allocationCount: 2
+        - name: rabbit-node-2
+          allocationCount: 2
