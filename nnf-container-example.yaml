@@ -26,11 +26,12 @@ data:
             containers:
               - name: nnf-container-example
                 image: ghcr.io/nearnodeflash/nnf-container-example:latest
-                # Note: securityContext is only needed until https://github.com/NearNodeFlash/NearNodeFlash.github.io/issues/77 is fixed
-                securityContext:
-                  capabilities:
-                    add: ["NET_BIND_SERVICE", "SYS_CHROOT", "AUDIT_WRITE"]
-
+                # Note: nnf-sos now includes the proper capabilities by
+                # default. Leaving this here for now in case an older verion of
+                # nnf-sos is used.
+                # securityContext:
+                  # capabilities:
+                    # add: ["NET_BIND_SERVICE", "SYS_CHROOT", "AUDIT_WRITE", "SETUID", "SETGID"]
 ---
 apiVersion: dws.cray.hpe.com/v1alpha1
 kind: Workflow
