@@ -8,6 +8,8 @@ data:
   storages:
     - name: DW_JOB_my_storage
       optional: false
+  # $NNF_CONTAINER_PORT can be used to get the port number(s)
+  numPorts: 1
   mpiSpec:
     mpiReplicaSpecs:
       Launcher:
@@ -20,6 +22,12 @@ data:
                   - mpirun
                   - mpi_hello_world
                   - "$(DW_JOB_my_storage)"
+                  # An example webserver can be started using python
+                  # - mpirun
+                  # - python3
+                  # - -m
+                  # - http.server
+                  # - $(NNF_CONTAINER_PORT)
       Worker:
         template:
           spec:
