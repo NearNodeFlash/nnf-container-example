@@ -8,7 +8,7 @@ data:
   storages:
     - name: DW_JOB_my_storage
       optional: false
-  # $NNF_CONTAINER_PORT can be used to get the port number(s)
+  # $NNF_CONTAINER_PORTS can be used to get the port number(s)
   numPorts: 1
   mpiSpec:
     mpiReplicaSpecs:
@@ -27,7 +27,7 @@ data:
                   # - python3
                   # - -m
                   # - http.server
-                  # - $(NNF_CONTAINER_PORT)
+                  # - $(NNF_CONTAINER_PORTS)
       Worker:
         template:
           spec:
