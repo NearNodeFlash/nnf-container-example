@@ -20,11 +20,8 @@
 int main(int argc, char **argv)
 {
   char nnf_storage_path[PATH_MAX];
-  char *nnf_node_name = NULL;
-
-  if (getenv("DEAN1") != NULL) {
-    printf("HEY, found DEAN1 env var with (%s)!\n", getenv("DEAN1"));
-  }
+  char nnf_node_name[PATH_MAX];
+  char *node_name = NULL;
 
   // Initialize the MPI environment. The two arguments to MPI Init are not
   // currently used by MPI implementations, but are there in case future
@@ -44,6 +41,14 @@ int main(int argc, char **argv)
   int name_len;
   MPI_Get_processor_name(processor_name, &name_len);
 
+  if (getenv("DEAN1") != NULL) {
+    printf("HEY, found DEAN1 env var with (%s)!\n", getenv("DEAN1"));
+  }
+
+  if (getenv("NNF_CONTAINER_PORTS") != NULL) {
+    printf("HEY, found NNF_CONTAINER_PORTS env var with (%s)!\n", getenv("NNF_CONTAINER_PORTS"));
+  }
+
   if (argc < 2)
   {
     printf("Storage parameter not supplied\n");
@@ -60,19 +65,15 @@ int main(int argc, char **argv)
 
   // We're using a GFS2 filesystem, which has index mounts for every compute node
   // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/0/
-  nnf_node_name = getenv("NNF_NODE_NAME");
-  int stop = 0;
-  if (nnf_node_name == NULL) {
+  node_name = getenv("NNF_NODE_NAME");
+  if (node_name == NULL) {
     printf("NNF_NODE_NAME env value not found\n");
-    stop = 1;
   }
   if (argc < 3) {
     printf("Node name parameter not supplied\n");
-    stop = 1;
-  }
-  if (stop > 0) {
     return -1;
   }
+  strncpy(nnf_node_name, argv[2], PATH_MAX);
   if (sprintf(nnf_storage_path, "%s/%s-0/testfile", nnf_storage_path, nnf_node_name) == -1)
   {
     fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
