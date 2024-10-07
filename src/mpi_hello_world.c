@@ -17,16 +17,13 @@
 
 #include <mpi.h>
 
-int main(int argc, char **argv, char **envp)
+int main(int argc, char **argv)
 {
   char nnf_storage_path[PATH_MAX];
   char *nnf_node_name = NULL;
 
-  printf("Found environment variables:\n");
-  for (char **env = envp; *env != NULL; env++)
-  {
-    char *thisEnv = *env;
-    printf(">%s\n", thisEnv);
+  if (getenv("DEAN1") != NULL) {
+    printf("HEY, found DEAN1 env var with (%s)!\n", getenv("DEAN1"));
   }
 
   // Initialize the MPI environment. The two arguments to MPI Init are not
@@ -64,8 +61,16 @@ int main(int argc, char **argv, char **envp)
   // We're using a GFS2 filesystem, which has index mounts for every compute node
   // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/0/
   nnf_node_name = getenv("NNF_NODE_NAME");
+  int stop = 0;
   if (nnf_node_name == NULL) {
     printf("NNF_NODE_NAME env value not found\n");
+    stop = 1;
+  }
+  if (argc < 3) {
+    printf("Node name parameter not supplied\n");
+    stop = 1;
+  }
+  if (stop > 0) {
     return -1;
   }
   if (sprintf(nnf_storage_path, "%s/%s-0/testfile", nnf_storage_path, nnf_node_name) == -1)
