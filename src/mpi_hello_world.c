@@ -26,8 +26,7 @@ int main(int argc, char **argv, char **envp)
   for (char **env = envp; *env != NULL; env++)
   {
     char *thisEnv = *env;
-    char *val = getenv(thisEnv);
-    printf(">%s=%s\n", thisEnv, val);
+    printf(">%s\n", thisEnv);
   }
 
   // Initialize the MPI environment. The two arguments to MPI Init are not
@@ -53,6 +52,7 @@ int main(int argc, char **argv, char **envp)
     printf("Storage parameter not supplied\n");
     return -1;
   }
+  strncpy(nnf_storage_path, argv[1], PATH_MAX);
 
   // Print off a hello world message
   char hostname[1024];
@@ -63,7 +63,6 @@ int main(int argc, char **argv, char **envp)
 
   // We're using a GFS2 filesystem, which has index mounts for every compute node
   // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/0/
-  strncpy(nnf_storage_path, argv[1], PATH_MAX);
   nnf_node_name = getenv("NNF_NODE_NAME");
   if (nnf_node_name == NULL) {
     printf("NNF_NODE_NAME env value not found\n");

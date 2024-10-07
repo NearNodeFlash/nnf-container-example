@@ -28,6 +28,12 @@ data:
                   # - -m
                   # - http.server
                   # - $(NNF_CONTAINER_PORTS)
+      Worker:
+        template:
+          spec:
+            containers:
+              - name: nnf-container-example
+                image: ghcr.io/nearnodeflash/nnf-container-example:latest
                 env:
                   - name: NNF_NODE_NAME
                     valueFrom:
@@ -35,12 +41,6 @@ data:
                         fieldPath: spec.nodeName
                   - name: DEAN1
                     value: thing1
-      Worker:
-        template:
-          spec:
-            containers:
-              - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:latest
   retryLimit: 2
 ---
 apiVersion: dataworkflowservices.github.io/v1alpha2
