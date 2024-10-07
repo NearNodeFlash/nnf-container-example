@@ -1,5 +1,5 @@
 ---
-apiVersion: nnf.cray.hpe.com/v1alpha1
+apiVersion: nnf.cray.hpe.com/v1alpha2
 kind: NnfContainerProfile
 metadata:
   name: demo
@@ -17,9 +17,10 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:latest
+                image: ghcr.io/nearnodeflash/nnf-container-example:0.0.0.14-496e
                 command:
                   - mpirun
+                  - --tag-output
                   - mpi_hello_world
                   - "$(DW_JOB_my_storage)"
                   # An example webserver can be started using python
@@ -33,15 +34,10 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:latest
-                # Note: nnf-sos now includes the proper capabilities by
-                # default. Leaving this here for now in case an older verion of
-                # nnf-sos is used.
-                # securityContext:
-                  # capabilities:
-                    # add: ["NET_BIND_SERVICE", "SYS_CHROOT", "AUDIT_WRITE", "SETUID", "SETGID"]
+                image: ghcr.io/nearnodeflash/nnf-container-example:0.0.0.14-496e
+  retryLimit: 2
 ---
-apiVersion: dws.cray.hpe.com/v1alpha1
+apiVersion: dataworkflowservices.github.io/v1alpha2
 kind: Workflow
 metadata:
   name: demo-container
@@ -52,7 +48,7 @@ spec:
     - "#DW jobdw name=demo-gfs2 type=gfs2 capacity=50GB"
     - "#DW container name=demo-container profile=demo \
       DW_JOB_my_storage=demo-gfs2"
-  wlmID: "5f239bd8-30db-450b-8c2c-a1a7c8631a1a"
-  jobID: 900001
+  wlmID: "Bubbly WLM"
+  jobID: "bubbles 900001"
   userID: 1050
   groupID: 1051
