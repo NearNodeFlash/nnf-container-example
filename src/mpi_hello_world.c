@@ -17,8 +17,14 @@
 
 #include <mpi.h>
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char **envp)
 {
+  printf("Found these env vars:\n");
+  for (char **env = envp; *env != NULL; env++) {
+    char *thisEnv = *env;
+    printf(">%s\n", thisEnv);
+  }
+
   char nnf_storage_path[PATH_MAX];
   char nnf_node_name[PATH_MAX];
   char *node_name = NULL;
