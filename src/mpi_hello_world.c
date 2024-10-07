@@ -17,10 +17,18 @@
 
 #include <mpi.h>
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char **envp)
 {
   char nnf_storage_path[PATH_MAX];
   char *nnf_node_name = NULL;
+
+  printf("Found environment variables:\n");
+  for (char **env = envp; *env != NULL; env++)
+  {
+    char *thisEnv = *env;
+    char *val = getenv(thisEnv);
+    printf(">%s=%s\n", thisEnv, val);
+  }
 
   // Initialize the MPI environment. The two arguments to MPI Init are not
   // currently used by MPI implementations, but are there in case future
@@ -45,12 +53,6 @@ int main(int argc, char **argv)
     printf("Storage parameter not supplied\n");
     return -1;
   }
-  strncpy(nnf_storage_path, argv[1], PATH_MAX);
-  nnf_node_name = getenv("NNF_NODE_NAME");
-  if (nnf_node_name == NULL) {
-    printf("NNF_NODE_NAME env value not found");
-    return -1;
-  }
 
   // Print off a hello world message
   char hostname[1024];
@@ -61,6 +63,12 @@ int main(int argc, char **argv)
 
   // We're using a GFS2 filesystem, which has index mounts for every compute node
   // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/0/
+  strncpy(nnf_storage_path, argv[1], PATH_MAX);
+  nnf_node_name = getenv("NNF_NODE_NAME");
+  if (nnf_node_name == NULL) {
+    printf("NNF_NODE_NAME env value not found\n");
+    return -1;
+  }
   if (sprintf(nnf_storage_path, "%s/%s-0/testfile", nnf_storage_path, nnf_node_name) == -1)
   {
     fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));

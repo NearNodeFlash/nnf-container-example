@@ -33,18 +33,15 @@ data:
                     valueFrom:
                       fieldRef:
                         fieldPath: spec.nodeName
+                  - name: DEAN1
+                    value: thing1
       Worker:
         template:
           spec:
             containers:
               - name: nnf-container-example
                 image: ghcr.io/nearnodeflash/nnf-container-example:latest
-                # Note: nnf-sos now includes the proper capabilities by
-                # default. Leaving this here for now in case an older verion of
-                # nnf-sos is used.
-                # securityContext:
-                  # capabilities:
-                    # add: ["NET_BIND_SERVICE", "SYS_CHROOT", "AUDIT_WRITE", "SETUID", "SETGID"]
+  retryLimit: 2
 ---
 apiVersion: dataworkflowservices.github.io/v1alpha2
 kind: Workflow
@@ -57,7 +54,7 @@ spec:
     - "#DW jobdw name=demo-gfs2 type=gfs2 capacity=50GB"
     - "#DW container name=demo-container profile=demo \
       DW_JOB_my_storage=demo-gfs2"
-  wlmID: "5f239bd8-30db-450b-8c2c-a1a7c8631a1a"
-  jobID: 900001
+  wlmID: "Bubbly WLM"
+  jobID: "bubbles 900001"
   userID: 1050
-  groupID: 1051
+  groupID: 1052
