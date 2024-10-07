@@ -1,5 +1,5 @@
 ---
-apiVersion: nnf.cray.hpe.com/v1alpha1
+apiVersion: nnf.cray.hpe.com/v1alpha2
 kind: NnfContainerProfile
 metadata:
   name: demo
@@ -28,6 +28,11 @@ data:
                   # - -m
                   # - http.server
                   # - $(NNF_CONTAINER_PORTS)
+                env:
+                  - name: NNF_NODE_NAME
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: spec.nodeName
       Worker:
         template:
           spec:
@@ -41,7 +46,7 @@ data:
                   # capabilities:
                     # add: ["NET_BIND_SERVICE", "SYS_CHROOT", "AUDIT_WRITE", "SETUID", "SETGID"]
 ---
-apiVersion: dws.cray.hpe.com/v1alpha1
+apiVersion: dataworkflowservices.github.io/v1alpha2
 kind: Workflow
 metadata:
   name: demo-container

@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -19,6 +20,7 @@
 int main(int argc, char **argv)
 {
   char nnf_storage_path[PATH_MAX];
+  char *nnf_node_name = NULL;
 
   // Initialize the MPI environment. The two arguments to MPI Init are not
   // currently used by MPI implementations, but are there in case future
@@ -44,6 +46,11 @@ int main(int argc, char **argv)
     return -1;
   }
   strncpy(nnf_storage_path, argv[1], PATH_MAX);
+  nnf_node_name = getenv("NNF_NODE_NAME");
+  if (nnf_node_name == NULL) {
+    printf("NNF_NODE_NAME env value not found");
+    return -1;
+  }
 
   // Print off a hello world message
   char hostname[1024];
@@ -54,7 +61,7 @@ int main(int argc, char **argv)
 
   // We're using a GFS2 filesystem, which has index mounts for every compute node
   // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/0/
-  if (sprintf(nnf_storage_path, "%s/0/testfile", nnf_storage_path) == -1)
+  if (sprintf(nnf_storage_path, "%s/%s-0/testfile", nnf_storage_path, nnf_node_name) == -1)
   {
     fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
     return errno;
