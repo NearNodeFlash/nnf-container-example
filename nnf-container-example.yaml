@@ -33,14 +33,12 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:latest
+                image: ghcr.io/nearnodeflash/nnf-container-example:
                 env:
                   - name: NNF_NODE_NAME
                     valueFrom:
                       fieldRef:
                         fieldPath: spec.nodeName
-                  - name: DEAN1
-                    value: thing1
   retryLimit: 2
 ---
 apiVersion: dataworkflowservices.github.io/v1alpha2

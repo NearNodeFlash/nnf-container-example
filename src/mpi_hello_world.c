@@ -41,14 +41,6 @@ int main(int argc, char **argv)
   int name_len;
   MPI_Get_processor_name(processor_name, &name_len);
 
-  if (getenv("DEAN1") != NULL) {
-    printf("HEY, found DEAN1 env var with (%s)!\n", getenv("DEAN1"));
-  }
-
-  if (getenv("NNF_CONTAINER_PORTS") != NULL) {
-    printf("HEY, found NNF_CONTAINER_PORTS env var with (%s)!\n", getenv("NNF_CONTAINER_PORTS"));
-  }
-
   if (argc < 2)
   {
     printf("Storage parameter not supplied\n");
@@ -68,12 +60,9 @@ int main(int argc, char **argv)
   node_name = getenv("NNF_NODE_NAME");
   if (node_name == NULL) {
     printf("NNF_NODE_NAME env value not found\n");
-  }
-  if (argc < 3) {
-    printf("Node name parameter not supplied\n");
     return -1;
   }
-  strncpy(nnf_node_name, argv[2], PATH_MAX);
+  strncpy(nnf_node_name, node_name, PATH_MAX);
   if (sprintf(nnf_storage_path, "%s/%s-0/testfile", nnf_storage_path, nnf_node_name) == -1)
   {
     fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
