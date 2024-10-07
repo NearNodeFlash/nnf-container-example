@@ -33,7 +33,7 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:
+                image: ghcr.io/nearnodeflash/nnf-container-example:latest
                 env:
                   - name: NNF_NODE_NAME
                     valueFrom:
