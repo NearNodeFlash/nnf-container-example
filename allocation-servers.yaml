@@ -4,6 +4,6 @@ spec:
       label: gfs2
       storage:
         - name: rabbit-node-1
-          allocationCount: 2
+          allocationCount: 1
         - name: rabbit-node-2
-          allocationCount: 2
+          allocationCount: 1
