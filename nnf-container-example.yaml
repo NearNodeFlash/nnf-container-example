@@ -17,7 +17,7 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:latest
+                image: ghcr.io/nearnodeflash/nnf-container-example:0.0.0.14-496e
                 command:
                   - mpirun
                   - --tag-output
@@ -34,7 +34,7 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:latest
+                image: ghcr.io/nearnodeflash/nnf-container-example:0.0.0.14-496e
   retryLimit: 2
 ---
 apiVersion: dataworkflowservices.github.io/v1alpha2

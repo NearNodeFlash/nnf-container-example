@@ -104,9 +104,10 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: nnf-container-example:master
+                image: ghcr.io/nearnodeflash/nnf-container-example:master
                 command:
                   - mpirun
+                  - --tag-output
                   - mpi_hello_world
                   - "$(DW_JOB_my_storage)"
       Worker:
@@ -114,11 +115,13 @@ data:
           spec:
             containers:
               - name: nnf-container-example
-                image: nnf-container-example:master
+                image: ghcr.io/nearnodeflash/nnf-container-example:master
 ```
 
 Both the `Launcher` and `Worker` must be defined. The main pieces here are to set the images for both
 and the command for the `Launcher`. Boiled down, these are just Kubernetes [PodTemplateSpecs](https://pkg.go.dev/k8s.io/api/core/v1#PodTemplateSpec).
+
+The container image tag may need to be changed from "master" to match the tag for your build.
 
 Our `mpi_hello_world` application takes in a command line argument for the storage file path. We are
 using the name of the storage we defined above in the `storages` object to pass into our command:
@@ -251,15 +254,17 @@ You can use kubectl to inspect the log to get your application's output:
 
 ```shell
 $ kubectl logs demo-container-launcher-wcvcs
-Defaulted container "nnf-container-example" out of: nnf-container-example, mpi-wait-for-worker-0 (init), mpi-wait-for-worker-1 (init), mpi-init-passwd (init)
-Warning: Permanently added 'demo-container-worker-1.demo-container-worker.default.svc,10.244.1.6' (ECDSA) to the list of known hosts.
-Warning: Permanently added 'demo-container-worker-0.demo-container-worker.default.svc,10.244.3.5' (ECDSA) to the list of known hosts.
-Hello world from processor demo-container-worker-1, rank 1 out of 2 processors. NNF Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0, hostname: demo-container-worker-1
-rank 1: test file: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0/0/testfile
-rank 1: wrote file to '/mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0/0/testfile'
-Hello world from processor demo-container-worker-0, rank 0 out of 2 processors. NNF Storage path: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0, hostname: demo-container-worker-0
-rank 0: test file: /mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0/0/testfile
-rank 0: wrote file to '/mnt/nnf/100db033-c9f2-4cf8-b085-505aebf571c1-0/0/testfile'
+Defaulted container "nnf-container-example" out of: nnf-container-example, mpi-init-passwd (init), mpi-wait-for-worker-2 (init)
+Warning: Permanently added '[demo-container-worker-1.demo-container.default.svc]:2222,[10.42.3.146]:2222' (ECDSA) to the list of known hosts.
+Warning: Permanently added '[demo-container-worker-0.demo-container.default.svc]:2222,[10.42.2.118]:2222' (ECDSA) to the list of known hosts.
+[1,0]<stdout>:Hello world from processor demo-container-worker-0, rank 0 out of 2 processors. NNF Storage path: /mnt/nnf/7f33f3bf-4559-4dda-892c-ff6148116a08-0, hostname: demo-container-worker-0
+[1,0]<stdout>:Found indexed dir: /mnt/nnf/7f33f3bf-4559-4dda-892c-ff6148116a08-0/rabbit-node-1-0
+[1,0]<stdout>:rank 0: test file: /mnt/nnf/7f33f3bf-4559-4dda-892c-ff6148116a08-0/rabbit-node-1-0/testfile
+[1,1]<stdout>:Hello world from processor demo-container-worker-1, rank 1 out of 2 processors. NNF Storage path: /mnt/nnf/7f33f3bf-4559-4dda-892c-ff6148116a08-0, hostname: demo-container-worker-1
+[1,1]<stdout>:Found indexed dir: /mnt/nnf/7f33f3bf-4559-4dda-892c-ff6148116a08-0/rabbit-node-2-0
+[1,1]<stdout>:rank 1: test file: /mnt/nnf/7f33f3bf-4559-4dda-892c-ff6148116a08-0/rabbit-node-2-0/testfile
+[1,0]<stdout>:rank 0: wrote file to '/mnt/nnf/7f33f3bf-4559-4dda-892c-ff6148116a08-0/rabbit-node-1-0/testfile'
+[1,1]<stdout>:rank 1: wrote file to '/mnt/nnf/7f33f3bf-4559-4dda-892c-ff6148116a08-0/rabbit-node-2-0/testfile'
 ```
 
 You can see that the Storage path is passed into the container application and printed to the log:
