@@ -42,8 +42,8 @@ int main(int argc, char **argv, char **envp)
   char hostname[1024];
   hostname[1023] = '\0';
   gethostname(hostname, 1023);
-  printf("Hello world from processor %s, rank %d out of %d processors. NNF Storage path: %s, hostname: %s\n",
-         processor_name, world_rank, world_size, nnf_storage_path, hostname);
+  printf("Hello world from processor %s, rank %d out of %d processors. Hostname: %s\n",
+         processor_name, world_rank, world_size, hostname);
 
   // We're using a GFS2 filesystem, which has index mounts for every compute node
   // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/rabbit-node-1-0/
