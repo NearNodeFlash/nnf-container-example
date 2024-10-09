@@ -49,14 +49,14 @@ int main(int argc, char **argv, char **envp)
   // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/rabbit-node-1-0/
 
   DIR *dir;
-  struct dirent *entry;
+  struct dirent *entry, *lentry;
   char nnf_storage_path[PATH_MAX];
   char storage_dir[PATH_MAX];
   char indexed_dir[PATH_MAX];
 
   // Find each mounted filesystem. The directories in /mnt/nnf are the
   // storages created via the "#DW jobdw" directives in the workflow.
-  // For this demo, we'll pick the first storage. A full-scale app would work
+  // For this demo, we'll pick the last storage. A full-scale app would work
   // through each of the storages.
   dir = opendir("/mnt/nnf");
   if (dir == NULL)
@@ -68,17 +68,18 @@ int main(int argc, char **argv, char **envp)
   {
     if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
       continue;
-    printf("Found mounted filesystem: %s\n", entry->d_name);
-    // In production, we would verify that it actually fits.
-    sprintf(storage_dir, "/mnt/nnf/%s", entry->d_name);
-    break; // Just use the first one for this demo.
+    printf("Found mounted filesystem: /mnt/nnf/%s\n", entry->d_name);
+    // This demo uses only the last storage found.
+    lentry = entry;
   }
+  // In production, we would verify that it actually fits.
+  sprintf(storage_dir, "/mnt/nnf/%s", lentry->d_name);
   closedir(dir);
 
   // Pick one of the indexed directories in the chosen storage. The directories
   // within the chosen storage are indexed, with one for each compute that has
   // access to this storage.
-  // For this demo, we'll pick the first indexed dir. A full-scale app would
+  // For this demo, we'll pick the last indexed dir. A full-scale app would
   // work through each of the indexed dirs.
   dir = opendir(storage_dir);
   if (dir == NULL)
@@ -90,11 +91,12 @@ int main(int argc, char **argv, char **envp)
   {
     if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
       continue;
-    printf("Found indexed dir: %s\n", entry->d_name);
-    // In production, we would verify that it actually fits.
-    sprintf(indexed_dir, "%s/%s", storage_dir, entry->d_name);
-    break; // Just use the first one for this demo.
+    printf("Found indexed dir: %s/%s\n", storage_dir, entry->d_name);
+    // This demo uses only the last indexed dir.
+    lentry = entry;
   }
+  // In production, we would verify that it actually fits.
+  sprintf(indexed_dir, "%s/%s", storage_dir, lentry->d_name);
   closedir(dir);
 
   // Now write a file to the indexed dir.
