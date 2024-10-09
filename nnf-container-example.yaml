@@ -20,6 +20,7 @@ data:
                 image: ghcr.io/nearnodeflash/nnf-container-example:latest
                 command:
                   - mpirun
+                  - --tag-output
                   - mpi_hello_world
                   - "$(DW_JOB_my_storage)"
                   # An example webserver can be started using python
@@ -34,11 +35,6 @@ data:
             containers:
               - name: nnf-container-example
                 image: ghcr.io/nearnodeflash/nnf-container-example:latest
-                env:
-                  - name: NNF_NODE_NAME
-                    valueFrom:
-                      fieldRef:
-                        fieldPath: spec.nodeName
   retryLimit: 2
 ---
 apiVersion: dataworkflowservices.github.io/v1alpha2
@@ -55,4 +51,4 @@ spec:
   wlmID: "Bubbly WLM"
   jobID: "bubbles 900001"
   userID: 1050
-  groupID: 1052
+  groupID: 1051

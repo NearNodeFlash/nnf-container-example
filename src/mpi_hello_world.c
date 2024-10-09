@@ -7,6 +7,7 @@
 // An intro MPI hello world program that uses MPI_Init, MPI_Comm_size,
 // MPI_Comm_rank, MPI_Finalize, and MPI_Get_processor_name.
 //
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -20,8 +21,6 @@
 int main(int argc, char **argv)
 {
   char nnf_storage_path[PATH_MAX];
-  char nnf_node_name[PATH_MAX];
-  char *node_name = NULL;
 
   // Initialize the MPI environment. The two arguments to MPI Init are not
   // currently used by MPI implementations, but are there in case future
@@ -47,6 +46,8 @@ int main(int argc, char **argv)
     return -1;
   }
   strncpy(nnf_storage_path, argv[1], PATH_MAX);
+  // A production app would verify that it fits.
+  nnf_storage_path[PATH_MAX-1] = '\0';
 
   // Print off a hello world message
   char hostname[1024];
@@ -56,14 +57,36 @@ int main(int argc, char **argv)
          processor_name, world_rank, world_size, nnf_storage_path, hostname);
 
   // We're using a GFS2 filesystem, which has index mounts for every compute node
-  // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/0/
-  node_name = getenv("NNF_NODE_NAME");
-  if (node_name == NULL) {
-    printf("NNF_NODE_NAME env value not found\n");
+  // e.g. /mnt/nnf/5d335081-cd0f-4b8a-a1f4-94860a8ae702-0/rabbit-node-1-0/
+
+  DIR *dir;
+  struct dirent *entry, *lentry;
+  char indexed_dir[PATH_MAX];
+
+  // Pick one of the indexed directories in the chosen storage. The directories
+  // within the chosen storage are indexed, with one for each compute that has
+  // access to this storage.
+  // For this demo, we'll pick the last indexed dir. A full-scale app would
+  // work through each of the indexed dirs.
+  dir = opendir(nnf_storage_path);
+  if (dir == NULL)
+  {
+    perror("opendir");
     return -1;
   }
-  strncpy(nnf_node_name, node_name, PATH_MAX);
-  if (sprintf(nnf_storage_path, "%s/%s-0/testfile", nnf_storage_path, nnf_node_name) == -1)
+  while ((entry = readdir(dir)) != NULL)
+  {
+    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+      continue;
+    printf("Found indexed dir: %s/%s\n", nnf_storage_path, entry->d_name);
+    // This demo uses only the last indexed dir.
+    lentry = entry;
+  }
+  // In production, we would verify that it actually fits.
+  sprintf(indexed_dir, "%s/%s", nnf_storage_path, lentry->d_name);
+  closedir(dir);
+
+  if (sprintf(nnf_storage_path, "%s/testfile", indexed_dir) == -1)
   {
     fprintf(stderr, "rank %d: %s\n", world_rank, strerror(errno));
     return errno;
