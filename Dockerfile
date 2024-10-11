@@ -1,20 +1,47 @@
-# Start from the NearNodeFlash MPI File Utils Image that is used for Data Movement. This is an easy
-# way to get MPI File Utils/mpi-operator as a base. Use a stage for building the application.
-# Alernatively, use mpi-operator's image directly:
-# FROM mpioperator/openmpi:0.3.0 AS build
-FROM ghcr.io/nearnodeflash/nnf-mfu:master AS build
+# Copyright 2024 Hewlett Packard Enterprise Development LP
+# Other additional copyright holders may be indicated within.
+#
+# The entirety of this work is licensed under the Apache License,
+# Version 2.0 (the "License"); you may not use this file except
+# in compliance with the License.
+#
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-# Install build tools
-RUN apt update
-RUN apt install -y make libopenmpi-dev
+FROM golang:1.21 AS builder
 
-# Build application
-WORKDIR /src
-COPY src .
-RUN make
+ARG TARGETARCH
+ARG TARGETOS
 
-# Final stage - start fresh and don't carry over the build artifacts
+WORKDIR /workspace
+
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+# Copy the go source
+COPY cmd/ cmd/
+COPY vendor/ vendor/
+
+# Build
+# the GOARCH has a default value to allow the binary be built according to the host where the command
+# was called. For example, if we call make docker-build in a local env which has the Apple Silicon M1 SO
+# the docker BUILDPLATFORM arg will be linux/arm64 when for Apple x86 it will be linux/amd64. Therefore,
+# by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o manager cmd/main.go
+
+ENTRYPOINT ["/bin/sh"]
+
+# The final application stage.
 FROM ghcr.io/nearnodeflash/nnf-mfu:master
+WORKDIR /
 
 # Install python3 to make a simple http server available
 RUN apt-get update && apt-get install -y \
@@ -22,5 +49,7 @@ RUN apt-get update && apt-get install -y \
     curl \
  && rm -rf /var/lib/apt/lists/*
 
-# Copy application from build stage into final stage
-COPY --from=build /src/mpi_hello_world /usr/bin/mpi_hello_world
+# Retrieve executable from previous layer
+COPY --from=builder /workspace/manager .
+
+ENTRYPOINT ["/manager"]
