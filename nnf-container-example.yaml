@@ -1,5 +1,5 @@
 ---
-apiVersion: nnf.cray.hpe.com/v1alpha2
+apiVersion: nnf.cray.hpe.com/v1alpha6
 kind: NnfContainerProfile
 metadata:
   name: demo
@@ -37,7 +37,7 @@ data:
                 image: ghcr.io/nearnodeflash/nnf-container-example:master
   retryLimit: 2
 ---
-apiVersion: dataworkflowservices.github.io/v1alpha2
+apiVersion: dataworkflowservices.github.io/v1alpha3
 kind: Workflow
 metadata:
   name: demo-container

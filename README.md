@@ -69,7 +69,7 @@ storage is persistent storage, then it must start with `DW_PERSISTENT` rather th
 
 ```yaml
 ---
-apiVersion: nnf.cray.hpe.com/v1alpha2
+apiVersion: nnf.cray.hpe.com/v1alpha6
 kind: NnfContainerProfile
 metadata:
   name: demo
@@ -88,7 +88,7 @@ Next, we define the container specification. For MPI applications, this is done 
 `mpiSpec` allows us to define the Launcher and Worker containers.
 
 ```yaml
-apiVersion: nnf.cray.hpe.com/v1alpha2
+apiVersion: nnf.cray.hpe.com/v1alpha6
 kind: NnfContainerProfile
 metadata:
   name: demo
