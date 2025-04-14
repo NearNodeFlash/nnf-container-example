@@ -36,7 +36,7 @@ application.
 Any container image that is built must be available in an image registry that is available on your
 cluster. See your cluster administrator for more details.
 
-In this example, we're using the GitHut Container Registry (ghcr.io), so your cluster must have internet access to retrieve the image.
+In this example, we're using the GitHub Container Registry (ghcr.io), so your cluster must have internet access to retrieve the image.
 
 #### MPI Applications
 
@@ -65,11 +65,12 @@ run your application.
 ### Storages
 
 In this example, we are expecting to have 1 non-optional storage called `DW_JOB_my_storage`. If the
-storage is persistent storage, then it must start with `DW_PERSISTENT` rather than `DW_JOB`. Filesystem types are not defined here, but later in the DW directive.
+storage is persistent storage, then it must start with `DW_PERSISTENT` rather than `DW_JOB`.
+Filesystem types are not defined here, but later in the DW directive.
 
 ```yaml
 ---
-apiVersion: nnf.cray.hpe.com/v1alpha6
+apiVersion: nnf.cray.hpe.com/v1alpha7
 kind: NnfContainerProfile
 metadata:
   name: demo
@@ -88,7 +89,7 @@ Next, we define the container specification. For MPI applications, this is done 
 `mpiSpec` allows us to define the Launcher and Worker containers.
 
 ```yaml
-apiVersion: nnf.cray.hpe.com/v1alpha6
+apiVersion: nnf.cray.hpe.com/v1alpha7
 kind: NnfContainerProfile
 metadata:
   name: demo
@@ -98,28 +99,24 @@ data:
     - name: DW_JOB_my_storage
       optional: false
   mpiSpec:
-    mpiReplicaSpecs:
-      Launcher:
-        template:
-          spec:
-            containers:
-              - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:master
-                command:
-                  - mpirun
-                  - --tag-output
-                  - mpi_hello_world
-                  - "$(DW_JOB_my_storage)"
-      Worker:
-        template:
-          spec:
-            containers:
-              - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:master
+    launcher:
+      containers:
+        - name: nnf-container-example
+          image: ghcr.io/nearnodeflash/nnf-container-example:master
+          command:
+            - mpirun
+            - --tag-output
+            - mpi_hello_world
+            - "$(DW_JOB_my_storage)"
+    worker:
+      containers:
+        - name: nnf-container-example
+          image: ghcr.io/nearnodeflash/nnf-container-example:master
 ```
 
-Both the `Launcher` and `Worker` must be defined. The main pieces here are to set the images for both
-and the command for the `Launcher`. Boiled down, these are just Kubernetes [PodTemplateSpecs](https://pkg.go.dev/k8s.io/api/core/v1#PodTemplateSpec).
+Both the `Launcher` and `Worker` must be defined. The main pieces here are to set the name and
+images for both and the command for the `Launcher`. Boiled down, these are simplified versions of
+Kubernetes [PodSpec](https://pkg.go.dev/k8s.io/api/core/v1#PodSpec).
 
 The container image tag may need to be changed from "master" to match the tag for your build.
 
@@ -127,21 +124,16 @@ Our `mpi_hello_world` application takes in a command line argument for the stora
 using the name of the storage we defined above in the `storages` object to pass into our command:
 
 ```yaml
-               command:
-                  - mpirun
-                  - mpi_hello_world
-                  - "$(DW_JOB_my_storage)"
+          command:
+            - mpirun
+            - mpi_hello_world
+            - "$(DW_JOB_my_storage)"
 ```
 
-For the full definition of the `MPIJobSpec` provided by `mpi-operator`, see the definition
-[here](https://pkg.go.dev/github.com/lukwil/mpi-operator/pkg/apis/kubeflow/v1#MPIJobSpec).  However,
-some of these values are overridden by NNF software and not all configurable options have been
-tested.
-
 For a full understanding of the other options in an NNF Container Profile, see the nnf-sos
-[samples](https://github.com/NearNodeFlash/nnf-sos/blob/master/config/samples/nnf_v1alpha1_nnfcontainerprofile.yaml)
-and
-[examples](https://github.com/NearNodeFlash/nnf-sos/blob/master/config/examples/nnf_v1alpha1_nnfcontainerprofiles.yaml).
+[examples](https://github.com/NearNodeFlash/nnf-sos/blob/master/config/examples/nnf_nnfcontainerprofiles.yaml)
+and the [type
+definitions](https://github.com/NearNodeFlash/nnf-sos/blob/master/api/v1alpha7/nnfcontainerprofile_types.go).
 
 ## Creating a DW Container Workflow
 
@@ -158,7 +150,9 @@ First, we'll create the storage. We will be using GFS2 for the filesystem:
 #DW jobdw name=demo-gfs2 type=gfs2 capacity=50GB
 ```
 
-Then, define the container. Note the `DW_JOB_my_storage=demo-gfs2` argument matches what is in the NNF Container Profile and maps it to the name of the GFS2 filesystem created in the DW Directive above.
+Then, define the container. Note the `DW_JOB_my_storage=demo-gfs2` argument matches what is in the
+NNF Container Profile and maps it to the name of the GFS2 filesystem created in the DW Directive
+above.
 
 ```none
 #DW container name=demo-container profile=demo DW_JOB_my_storage=demo-gfs2
@@ -170,7 +164,8 @@ Then, define the container. Note the `DW_JOB_my_storage=demo-gfs2` argument matc
 the manual way of doing things. You may want to consult a Flux expert on how to drive a container
 workflow using Flux.
 
-With a working Kubernetes cluster, the previous examples can be put together and deployed on the system. The files in this repository have done that.
+With a working Kubernetes cluster, the previous examples can be put together and deployed on the
+system. The files in this repository have done that.
 
 ### Create the Profile and Workflow
 
@@ -218,7 +213,7 @@ kubectl patch --type merge workflow demo-container --patch '{"spec": {"desiredSt
 ```
 
 ```shell
-kubectl get workflows
+$ kubectl get workflows
 NAME                    STATE   READY   STATUS      AGE
 demo-container   Setup   true    Completed   12m
 ```
@@ -250,7 +245,7 @@ demo-container-worker-0         1/1     Running   0          5s
 demo-container-worker-1         1/1     Running   0          5s
 ```
 
-You can use kubectl to inspect the log to get your application's output:
+You can use `kubectl` to inspect the log to get your application's output:
 
 ```shell
 $ kubectl logs demo-container-launcher-wcvcs
