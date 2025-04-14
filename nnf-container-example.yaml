@@ -1,5 +1,5 @@
 ---
-apiVersion: nnf.cray.hpe.com/v1alpha6
+apiVersion: nnf.cray.hpe.com/v1alpha7
 kind: NnfContainerProfile
 metadata:
   name: demo
@@ -11,30 +11,26 @@ data:
   # $NNF_CONTAINER_PORTS can be used to get the port number(s)
   numPorts: 1
   mpiSpec:
-    mpiReplicaSpecs:
-      Launcher:
-        template:
-          spec:
-            containers:
-              - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:master
-                command:
-                  - mpirun
-                  - --tag-output
-                  - mpi_hello_world
-                  - "$(DW_JOB_my_storage)"
-                  # An example webserver can be started using python
-                  # - mpirun
-                  # - python3
-                  # - -m
-                  # - http.server
-                  # - $(NNF_CONTAINER_PORTS)
-      Worker:
-        template:
-          spec:
-            containers:
-              - name: nnf-container-example
-                image: ghcr.io/nearnodeflash/nnf-container-example:master
+    launcher:
+      containers:
+        - name: nnf-container-example
+          image: ghcr.io/nearnodeflash/nnf-container-example:master
+          command:
+            - mpirun
+            - --tag-output
+            - mpi_hello_world
+            - "$(DW_JOB_my_storage)"
+            # An example webserver can be started using python
+            # - mpirun
+            # - python3
+            # - -m
+            # - http.server
+            # - $(NNF_CONTAINER_PORTS)
+    worker:
+      containers:
+        - name: nnf-container-example
+          image: ghcr.io/nearnodeflash/nnf-container-example:master
+          # command isn't needed here since the image's entrypoint is sufficient
   retryLimit: 2
 ---
 apiVersion: dataworkflowservices.github.io/v1alpha3
@@ -48,7 +44,7 @@ spec:
     - "#DW jobdw name=demo-gfs2 type=gfs2 capacity=50GB"
     - "#DW container name=demo-container profile=demo \
       DW_JOB_my_storage=demo-gfs2"
-  wlmID: "Bubbly WLM"
-  jobID: "bubbles 900001"
+  wlmID: "flux"
+  jobID: "fPxk8Hj4C1V"
   userID: 1050
   groupID: 1051
