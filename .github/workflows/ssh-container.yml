@@ -1,0 +1,111 @@
+name: SSH Container build and push
+
+on: [push]
+
+env:
+  # TEST_TARGET: Name of the testing target in the Dockerfile
+  TEST_TARGET: testing
+
+  # DO_TEST - true to build and run unit tests, false to skip the tests
+  DO_TEST: false
+
+  # DO_PUSH - true to push to the HPE_DEPLOY_REPO, false to not push
+  DO_PUSH: true
+
+  # Container build arguments - tie these to Blake for testing
+  USER_UID: 1060
+  USER_GID: 100
+
+  # Image name for the SSH container
+  IMAGE_NAME: ssh-container
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Lowercase repository name for docker build
+      id: lowercase-repository-name
+      run: |
+        echo "REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+    - name: "Set tags for main/master"
+      id: set_tags
+      run: |
+        echo "VERSION_TAG=$(./git-version-gen | grep -v UNKNOWN)" >> ${GITHUB_ENV}
+        echo "TEST_TAG=$(git rev-parse HEAD)-test" >> ${GITHUB_ENV}
+        echo "SHA_TAG=$(git rev-parse HEAD)" >> ${GITHUB_ENV}
+        echo "${GITHUB_ENV}:"
+        cat ${GITHUB_ENV}
+      shell: bash
+
+    - name: "Docker metadata"
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ghcr.io/${{ env.REPO_NAME }}-ssh-container
+        tags: |
+          # For merge to master branch, tag example: 'master'
+          type=ref,event=branch
+          # For PR event, tag example: 'pr-3'
+          type=ref,event=pr
+          # For PR event or merge event, tag example: 1.0.1.12-5667
+          type=raw,value=${{ env.VERSION_TAG }}
+          # For PR event or merge, tag example: 566769e04d2436cf5f42ae4f46092c7dff6e668e
+          type=raw,value=${{ env.SHA_TAG }}
+          # For push to semver tag, tag example: 1.0.2
+          # This also sets 'latest'.
+          type=semver,pattern={{version}}
+          # For push to semver tag, tag example: 1.0
+          type=semver,pattern={{major}}.{{minor}}
+
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate SSH keys for container build
+      run: |
+        cd ssh-container
+        make ssh-keys client-keys
+
+    - name: Build the test Docker image
+      if: ${{ env.DO_TEST == 'true' }}
+      id: docker_build_test_target
+      uses: docker/build-push-action@v6
+      with:
+        context: ./ssh-container
+        push: false
+        target: ${{ env.TEST_TARGET }}
+        tags: ${{ env.IMAGE_NAME }}:${{ env.TEST_TAG }}
+        build-args: |
+          USER_UID=${{ env.USER_UID }}
+          USER_GID=${{ env.USER_GID }}
+
+    - name: Run the Docker image unit tests
+      if: ${{ env.DO_TEST == 'true' }}
+      run: docker run ${{ env.IMAGE_NAME }}:${{ env.TEST_TAG }}
+
+    - name: Build the final Docker image
+      id: docker_build
+      uses: docker/build-push-action@v6
+      with:
+        context: ./ssh-container
+        push: false
+        tags: ${{ steps.meta.outputs.tags }}
+        build-args: |
+          USER_UID=${{ env.USER_UID }}
+          USER_GID=${{ env.USER_GID }}
+
+    - name: Peek at the docker images
+      run: docker images | grep ${{ env.IMAGE_NAME }}
+
+
