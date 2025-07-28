@@ -1,0 +1,27 @@
+apiVersion: nnf.cray.hpe.com/v1alpha7
+kind: NnfContainerProfile
+metadata:
+  name: ssh-container
+  namespace: nnf-system
+data:
+  mpiSpec:
+    launcher:
+      containers:
+        - image: ghcr.io/bdevcich/ssh-container:latest
+          imagePullPolicy: IfNotPresent
+          name: ssh-svr
+    worker:
+      containers:
+        - image: ghcr.io/bdevcich/ssh-container:latest
+          imagePullPolicy: IfNotPresent
+          name: ssh-worker
+  numPorts: 1
+  pinned: false
+  postRunTimeoutSeconds: 0
+  preRunTimeoutSeconds: 300
+  retryLimit: 2
+  storages:
+    - name: DW_JOB_my_storage
+      optional: true
+    - name: DW_GLOBAL_lus
+      optional: true
